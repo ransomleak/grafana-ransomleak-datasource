@@ -13,12 +13,20 @@ export function ConfigEditor(props: Props) {
   const { jsonData, secureJsonFields, secureJsonData } = options;
 
   const onHostChange = (event: ChangeEvent<HTMLInputElement>) => {
-    // Trim and drop trailing slashes so the proxy route doesn't build `host//api/…`.
-    const host = event.target.value.trim().replace(/\/+$/, '');
+    // Store as typed — normalizing here would mangle a URL mid-keystroke (e.g.
+    // stripping the slashes of `https://`). Trimming/trailing-slash on blur.
     onOptionsChange({
       ...options,
-      jsonData: { ...jsonData, host },
+      jsonData: { ...jsonData, host: event.target.value },
     });
+  };
+
+  const onHostBlur = () => {
+    // Trim and drop trailing slashes so the proxy route doesn't build `host//api/…`.
+    const host = (jsonData.host ?? '').trim().replace(/\/+$/, '');
+    if (host !== (jsonData.host ?? '')) {
+      onOptionsChange({ ...options, jsonData: { ...jsonData, host } });
+    }
   };
 
   // Secret field — only ever stored in secureJsonData, encrypted server-side.
@@ -49,6 +57,7 @@ export function ConfigEditor(props: Props) {
           id="config-editor-host"
           value={jsonData.host ?? ''}
           onChange={onHostChange}
+          onBlur={onHostBlur}
           placeholder="https://app.ransomleak.com"
           width={FIELD_WIDTH}
         />

@@ -180,18 +180,34 @@ export class DataSource extends DataSourceApi<RansomLeakQuery, RansomLeakDataSou
 
   /**
    * Live metric list for the query editor dropdown and template variables.
-   * Falls back to the static list on failure and caches the result so that N
-   * query rows in a panel don't each issue an identical `/search` round-trip.
+   * Caches only a successful, non-empty live list so N query rows in a panel
+   * don't each issue an identical `/search` round-trip; a failed or empty
+   * response returns the static fallback without poisoning the cache, so a
+   * later call retries once the host becomes reachable.
    */
   async getMetricOptions(): Promise<Array<SelectableValue<string>>> {
-    this.metricOptionsCache ??= this.searchMetrics().catch(() => metricSelectOptions);
+    this.metricOptionsCache ??= this.loadMetricOptions();
     return this.metricOptionsCache;
+  }
+
+  private async loadMetricOptions(): Promise<Array<SelectableValue<string>>> {
+    try {
+      const live = await this.searchMetrics();
+      if (live.length > 0) {
+        return live;
+      }
+    } catch {
+      /* fall through to the static fallback */
+    }
+    // No usable live list yet — don't cache the fallback so the next call retries.
+    this.metricOptionsCache = undefined;
+    return metricSelectOptions;
   }
 
   private async searchMetrics(): Promise<Array<SelectableValue<string>>> {
     const raw = await this.post<Array<string | { text?: string; value?: string }>>('search', {});
-    if (!Array.isArray(raw) || raw.length === 0) {
-      return metricSelectOptions;
+    if (!Array.isArray(raw)) {
+      return [];
     }
     return raw
       .map((entry) => {
