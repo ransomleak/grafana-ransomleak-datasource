@@ -1,6 +1,7 @@
 {
-  "name": "ransomleak",
+  "name": "ransomleak-grafana-datasource",
   "version": "1.0.0",
+  "description": "Grafana data source plugin for RansomLeak human-risk observability — query security-awareness training, per-team human-risk score, and phishing/smishing outcomes live from the RansomLeak API.",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
@@ -11,10 +12,19 @@
     "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
     "server": "docker compose up --build",
+    "mock": "node dev/mock-ransomleak/server.js",
     "sign": "sign-plugin"
   },
-  "author": "Ransomleak",
-  "license": "Apache-2.0",
+  "author": "RansomLeak",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://ransomleak.com/integrations/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ransomleak/grafana-ransomleak-datasource.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ransomleak/grafana-ransomleak-datasource/issues"
+  },
   "devDependencies": {
     "@grafana/eslint-config": "^9.0.0",
     "@grafana/plugin-e2e": "^3.6.1",

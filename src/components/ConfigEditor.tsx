@@ -1,69 +1,74 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, SecretInput } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import { InlineField, Input, SecretInput } from '@grafana/ui';
+import { RansomLeakDataSourceOptions, RansomLeakSecureJsonData } from '../types';
 
-interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
+interface Props extends DataSourcePluginOptionsEditorProps<RansomLeakDataSourceOptions, RansomLeakSecureJsonData> {}
+
+const LABEL_WIDTH = 18;
+const FIELD_WIDTH = 48;
 
 export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
   const { jsonData, secureJsonFields, secureJsonData } = options;
 
-  const onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onHostChange = (event: ChangeEvent<HTMLInputElement>) => {
+    // Trim and drop trailing slashes so the proxy route doesn't build `host//api/…`.
+    const host = event.target.value.trim().replace(/\/+$/, '');
     onOptionsChange({
       ...options,
-      jsonData: {
-        ...jsonData,
-        path: event.target.value,
-      },
+      jsonData: { ...jsonData, host },
     });
   };
 
-  // Secure field (only sent to the backend)
-  const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+  // Secret field — only ever stored in secureJsonData, encrypted server-side.
+  const onApiKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
       ...options,
-      secureJsonData: {
-        apiKey: event.target.value,
-      },
+      secureJsonData: { ...options.secureJsonData, apiKey: event.target.value },
     });
   };
 
-  const onResetAPIKey = () => {
+  const onResetApiKey = () => {
     onOptionsChange({
       ...options,
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        apiKey: false,
-      },
-      secureJsonData: {
-        ...options.secureJsonData,
-        apiKey: '',
-      },
+      secureJsonFields: { ...options.secureJsonFields, apiKey: false },
+      secureJsonData: { ...options.secureJsonData, apiKey: '' },
     });
   };
 
   return (
     <>
-      <InlineField label="Path" labelWidth={14} interactive tooltip={'Json field returned to frontend'}>
+      <InlineField
+        label="Host"
+        labelWidth={LABEL_WIDTH}
+        interactive
+        tooltip="Base URL of your RansomLeak instance, e.g. https://app.ransomleak.com. The plugin appends /api/integration/grafana server-side."
+      >
         <Input
-          id="config-editor-path"
-          onChange={onPathChange}
-          value={jsonData.path}
-          placeholder="Enter the path, e.g. /api/v1"
-          width={40}
+          id="config-editor-host"
+          value={jsonData.host ?? ''}
+          onChange={onHostChange}
+          placeholder="https://app.ransomleak.com"
+          width={FIELD_WIDTH}
         />
       </InlineField>
-      <InlineField label="API Key" labelWidth={14} interactive tooltip={'Secure json field (backend only)'}>
+
+      <InlineField
+        label="Partner API key"
+        labelWidth={LABEL_WIDTH}
+        interactive
+        tooltip="Your RansomLeak partner integration key. Stored encrypted (secureJsonData) and sent only from the Grafana server — it never reaches the browser."
+      >
         <SecretInput
           required
           id="config-editor-api-key"
-          isConfigured={secureJsonFields.apiKey}
-          value={secureJsonData?.apiKey}
-          placeholder="Enter your API key"
-          width={40}
-          onReset={onResetAPIKey}
-          onChange={onAPIKeyChange}
+          isConfigured={Boolean(secureJsonFields?.apiKey)}
+          value={secureJsonData?.apiKey ?? ''}
+          placeholder="rl_partner_…"
+          width={FIELD_WIDTH}
+          onReset={onResetApiKey}
+          onChange={onApiKeyChange}
         />
       </InlineField>
     </>

@@ -1,50 +1,74 @@
-<!-- This README file is going to be the one displayed on the Grafana.com website for your plugin. Uncomment and replace the content here before publishing.
+# RansomLeak data source for Grafana
 
-Remove any remaining comments before publishing as these may be displayed on Grafana.com -->
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-# Ransomleak
+Bring **human-risk observability** into Grafana. This data source queries the
+RansomLeak API live so you can chart security-awareness training, per-team
+human-risk score, and phishing/smishing outcomes next to the rest of your
+operational telemetry — no exporting, no scraping, no second pane of glass.
 
-<!-- To help maximize the impact of your README and improve usability for users, we propose the following loose structure:
+Human risk is one of the largest and least-instrumented attack surfaces in most
+organizations. Security-awareness data usually lives in a vendor portal, walled
+off from the dashboards leadership and SecOps already watch. This plugin turns
+RansomLeak into a first-class Grafana data source so human-risk trends sit
+alongside your infrastructure, application, and security metrics — and can drive
+the same alerts and review rituals.
 
-**BEFORE YOU BEGIN**
-- Ensure all links are absolute URLs so that they will work when the README is displayed within Grafana and Grafana.com
-- Be inspired ✨
-  - [grafana-polystat-panel](https://github.com/grafana/grafana-polystat-panel)
-  - [volkovlabs-variable-panel](https://github.com/volkovlabs/volkovlabs-variable-panel)
+## What you can build
 
-**ADD SOME BADGES**
+- **Per-team human-risk score** over time (0–100), faceted by team.
+- **Training completion** and **overdue assignments**, org-wide or per team.
+- **Phishing click vs. report rate** by channel (email, SMS) to see whether
+  people are getting better at spotting and reporting simulations.
+- A **table of employees with overdue training** for targeted follow-up.
+- A closed-loop count of users **auto-assigned training from Grafana alerts**.
 
-Badges convey useful information at a glance for users whether in the Catalog or viewing the source code. You can use the generator on [Shields.io](https://shields.io/badges/dynamic-json-badge) together with the Grafana.com API
-to create dynamic badges that update automatically when you publish a new version to the marketplace.
-
-- For the URL parameter use `https://grafana.com/api/plugins/your-plugin-id`.
-- Example queries:
-  - Downloads: `$.downloads`
-  - Catalog Version: `$.version`
-  - Grafana Dependency: `$.grafanaDependency`
-  - Signature Type: `$.versionSignatureType`
-- Optionally, for the logo parameter use `grafana`.
-
-Full example: ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-polystat-panel&label=Marketplace&prefix=v&color=F47A20)
-
-Consider other [badges](https://shields.io/badges) as you feel appropriate for your project.
-
-## Overview / Introduction
-Provide one or more paragraphs as an introduction to your plugin to help users understand why they should use it.
-
-Consider including screenshots:
-- in [plugin.json](https://grafana.com/developers/plugin-tools/reference/plugin-json#info) include them as relative links.
-- in the README ensure they are absolute URLs.
+A ready-made **"RansomLeak Human Risk"** dashboard ships with the plugin — find
+it on the data source's **Dashboards** tab after install and click **Import**.
 
 ## Requirements
-List any requirements or dependencies they may need to run the plugin.
 
-## Getting Started
-Provide a quick start on how to configure and use the plugin.
+- Grafana **10.4.0** or newer.
+- A RansomLeak account and a **partner integration API key**
+  (Settings → Integrations in RansomLeak, or contact your RansomLeak admin).
 
-## Documentation
-If your project has dedicated documentation available for users, provide links here. For help in following Grafana's style recommendations for technical documentation, refer to our [Writer's Toolkit](https://grafana.com/docs/writers-toolkit/).
+## Getting started
 
-## Contributing
-Do you want folks to contribute to the plugin or provide feedback through specific means? If so, tell them how!
--->
+1. **Connections → Add new connection → RansomLeak**, then **Add new data source**.
+2. Set **Host** to your RansomLeak base URL, e.g. `https://app.ransomleak.com`.
+   The plugin calls `…/api/integration/grafana` under that host.
+3. Paste your **Partner API key**.
+4. Click **Save & test**. A green result means the key authenticated.
+
+Your API key is stored in Grafana's encrypted `secureJsonData` and is injected
+**server-side** by Grafana's data proxy. It is never exposed to the browser and
+never leaves your Grafana server except in the request to your RansomLeak host.
+
+## Querying
+
+In any panel, pick the **RansomLeak** data source and choose:
+
+- **Metric** — the human-risk signal (e.g. `human_risk_score`,
+  `training_completion_rate`, `phishing_click_rate`, `overdue_users`).
+- **Team** — optional team filter. Supports dashboard variables, e.g. `$team`.
+- **Channel** — optional channel filter for phishing/smishing metrics
+  (`email`, `sms`).
+- **Format** — *Time series* for charts and stats, *Table* for per-employee
+  breakdowns.
+
+## Security & privacy
+
+- The plugin is frontend-only and holds no state of its own. It reads from your
+  RansomLeak host through Grafana's data proxy using your key.
+- No data is sent anywhere except your configured RansomLeak host.
+
+## License
+
+Licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See
+[LICENSE](https://www.gnu.org/licenses/agpl-3.0.en.html).
+
+## Support
+
+- Website: https://ransomleak.com
+- Integration docs: https://ransomleak.com/integrations/
+- Issues: https://github.com/ransomleak/grafana-ransomleak-datasource/issues

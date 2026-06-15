@@ -1,14 +1,19 @@
 apiVersion: 1
 
+# Dev provisioning: points the plugin at the local mock RansomLeak backend
+# (dev/mock-ransomleak/server.js) so `Save & test` and the bundled dashboard
+# work end-to-end without the real API. host.docker.internal resolves to the
+# host machine from inside the Grafana container (Docker Desktop / Linux 20.10+).
 datasources:
-  - name: 'ransomleak'
-    type: 'ransomleak-ransomleak-datasource'
+  - name: RansomLeak
+    uid: ransomleak-dev
+    type: ransomleak-ransomleak-datasource
     access: proxy
-    isDefault: false
+    isDefault: true
     orgId: 1
     version: 1
     editable: true
     jsonData:
-      path: '/resources'
+      host: http://host.docker.internal:4000
     secureJsonData:
-      apiKey: 'api-key'
+      apiKey: rl_dev_partner_key_demo

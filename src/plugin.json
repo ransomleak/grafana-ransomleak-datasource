@@ -1,26 +1,48 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "Ransomleak",
+  "name": "RansomLeak",
   "id": "ransomleak-ransomleak-datasource",
   "metrics": true,
+  "annotations": false,
+  "alerting": false,
   "info": {
-    "description": "",
-    "author": {
-      "name": "Ransomleak"
-    },
-    "keywords": ["datasource"],
-    "logos": {
-      "small": "img/logo.svg",
-      "large": "img/logo.svg"
-    },
-    "links": [],
-    "screenshots": [],
+    "description": "Query RansomLeak human-risk telemetry (training completion, per-team human-risk score, phishing and smishing outcomes) directly in Grafana.",
+    "author": { "name": "RansomLeak", "url": "https://ransomleak.com" },
+    "keywords": ["security", "human risk", "security awareness training", "phishing", "compliance"],
+    "logos": { "small": "img/logo.svg", "large": "img/logo.svg" },
+    "links": [
+      { "name": "Website", "url": "https://ransomleak.com" },
+      { "name": "Integration setup", "url": "https://ransomleak.com/integrations/" },
+      { "name": "License", "url": "https://www.gnu.org/licenses/agpl-3.0.en.html" }
+    ],
+    "screenshots": [
+      { "name": "Human Risk dashboard", "path": "img/dashboard.png" }
+    ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "RansomLeak Human Risk",
+      "path": "dashboards/ransomleak-human-risk.json"
+    }
+  ],
+  "routes": [
+    {
+      "path": "rl",
+      "url": "{{ .JsonData.host }}/api/integration/grafana",
+      "headers": [
+        {
+          "name": "Authorization",
+          "content": "Bearer {{ .SecureJsonData.apiKey }}"
+        }
+      ]
+    }
+  ],
   "dependencies": {
-    "grafanaDependency": ">=12.3.0",
+    "grafanaDependency": ">=10.4.0",
     "plugins": []
   }
 }

@@ -1,0 +1,99 @@
+{
+  "title": "RansomLeak Human Risk",
+  "uid": "ransomleak-human-risk",
+  "tags": ["ransomleak", "security", "human-risk"],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "time": { "from": "now-30d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_RANSOMLEAK",
+        "label": "RansomLeak",
+        "type": "datasource",
+        "query": "ransomleak-ransomleak-datasource",
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "team",
+        "label": "Team",
+        "type": "textbox",
+        "query": "",
+        "current": { "text": "", "value": "" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "title": "Training completion rate (30d)",
+      "type": "stat",
+      "datasource": { "type": "ransomleak-ransomleak-datasource", "uid": "${DS_RANSOMLEAK}" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "metric": "training_completion_rate", "team": "$team", "format": "time_series" }
+      ]
+    },
+    {
+      "title": "Employees overdue",
+      "type": "stat",
+      "datasource": { "type": "ransomleak-ransomleak-datasource", "uid": "${DS_RANSOMLEAK}" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "refId": "A", "metric": "assignments_overdue", "team": "$team", "format": "time_series" }
+      ]
+    },
+    {
+      "title": "Auto-assigned via Grafana (7d)",
+      "type": "stat",
+      "datasource": { "type": "ransomleak-ransomleak-datasource", "uid": "${DS_RANSOMLEAK}" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "refId": "A", "metric": "auto_assigned_via_grafana", "team": "$team", "format": "time_series" }
+      ]
+    },
+    {
+      "title": "Current human-risk by team",
+      "type": "stat",
+      "datasource": { "type": "ransomleak-ransomleak-datasource", "uid": "${DS_RANSOMLEAK}" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100 }, "overrides": [] },
+      "options": { "reduceOptions": { "calc": ["lastNotNull"], "values": false }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        { "refId": "A", "metric": "human_risk_score", "team": "$team", "format": "time_series" }
+      ]
+    },
+    {
+      "title": "Human-risk score by team",
+      "type": "timeseries",
+      "datasource": { "type": "ransomleak-ransomleak-datasource", "uid": "${DS_RANSOMLEAK}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "metric": "human_risk_score", "team": "$team", "format": "time_series" }
+      ]
+    },
+    {
+      "title": "Phishing click vs report rate (email)",
+      "type": "timeseries",
+      "datasource": { "type": "ransomleak-ransomleak-datasource", "uid": "${DS_RANSOMLEAK}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "metric": "phishing_click_rate", "channel": "email", "team": "$team", "format": "time_series" },
+        { "refId": "B", "metric": "phishing_report_rate", "channel": "email", "team": "$team", "format": "time_series" }
+      ]
+    },
+    {
+      "title": "Employees with overdue training",
+      "type": "table",
+      "datasource": { "type": "ransomleak-ransomleak-datasource", "uid": "${DS_RANSOMLEAK}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "targets": [
+        { "refId": "A", "metric": "overdue_users", "team": "$team", "format": "table" }
+      ]
+    }
+  ]
+}
