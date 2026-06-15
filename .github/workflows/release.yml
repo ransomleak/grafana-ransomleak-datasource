@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: grafana/plugin-actions/build-plugin@build-plugin/v1.0.2
+      - uses: grafana/plugin-actions/build-plugin@build-plugin/v1.2.0
         # Plugin signing is enabled. Add a repository secret named
         # GRAFANA_ACCESS_POLICY_TOKEN (an access policy token created under the
         # Grafana Cloud account whose slug matches the plugin id org segment,
