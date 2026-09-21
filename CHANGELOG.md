@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 (Unreleased)
+## 1.1.0
 
 - Query editor gains an optional **Campaign** filter (name or campaign id) on the
   four campaign-backed metrics: `training_completion_rate`, `assignments_overdue`,
