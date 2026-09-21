@@ -1,7 +1,7 @@
 {
   "name": "ransomleak-grafana-datasource",
   "version": "1.1.0",
-  "description": "Grafana data source plugin for RansomLeak human-risk observability — query security-awareness training, per-team human-risk score, and phishing/smishing outcomes live from the RansomLeak API.",
+  "description": "Grafana data source plugin for RansomLeak human-risk observability \u2014 query security-awareness training, per-team human-risk score, and phishing/smishing outcomes live from the RansomLeak API.",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
@@ -72,6 +72,9 @@
     "webpack-livereload-plugin": "^3.0.2",
     "webpack-subresource-integrity": "^5.1.0",
     "webpack-virtual-modules": "^0.6.2"
+  },
+  "overrides": {
+    "js-cookie": "^3.0.8"
   },
   "engines": {
     "node": ">=22"
