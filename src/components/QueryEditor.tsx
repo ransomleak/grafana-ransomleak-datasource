@@ -2,7 +2,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, Input, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 import { DataSource } from '../datasource';
-import { describeMetric, metricSelectOptions } from '../metrics';
+import { MetricDescriptor, describeMetric, metricSelectOptions } from '../metrics';
 import { RansomLeakDataSourceOptions, RansomLeakFormat, RansomLeakQuery } from '../types';
 
 type Props = QueryEditorProps<DataSource, RansomLeakQuery, RansomLeakDataSourceOptions>;
@@ -13,6 +13,53 @@ const FORMAT_OPTIONS: Array<SelectableValue<RansomLeakFormat>> = [
 ];
 
 const LABEL_WIDTH = 14;
+
+/**
+ * The optional facet filters, in render order. `flag` is the {@link MetricDescriptor} key that
+ * says whether a metric accepts the facet — `undefined` means "always shown" (team applies to
+ * every metric). Adding a facet is one entry here plus the matching descriptor flag, rather than
+ * a fourth copy of the show-check, the reset rule and the input block.
+ */
+const FACETS: Array<{
+  key: 'team' | 'campaign' | 'channel';
+  flag?: 'campaign' | 'channel';
+  label: string;
+  tooltip: string;
+  placeholder: string;
+}> = [
+  {
+    key: 'team',
+    label: 'Team',
+    tooltip: 'Optional team filter. Supports variables, e.g. $team.',
+    placeholder: 'All teams',
+  },
+  {
+    key: 'campaign',
+    flag: 'campaign',
+    label: 'Campaign',
+    tooltip: 'Optional training-campaign filter, by name or campaign id. Supports variables, e.g. $campaign.',
+    placeholder: 'All campaigns',
+  },
+  {
+    key: 'channel',
+    flag: 'channel',
+    label: 'Channel',
+    tooltip: 'Optional channel filter for phishing/smishing metrics, e.g. email or sms.',
+    placeholder: 'e.g. email',
+  },
+];
+
+/**
+ * Whether a metric accepts a facet. A metric the static catalog can't describe (live-only, from
+ * `/search`) is assumed to accept it, so a new backend metric isn't stuck without its filters
+ * until the plugin ships a matching descriptor.
+ */
+function metricAcceptsFacet(meta: MetricDescriptor | undefined, flag?: 'campaign' | 'channel'): boolean {
+  if (!flag) {
+    return true;
+  }
+  return meta ? Boolean(meta[flag]) : true;
+}
 
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>(metricSelectOptions);
@@ -41,18 +88,17 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       // Reset to the metric's natural orientation (tabular -> table, otherwise
       // time series); keep the user's choice for live metrics not in the catalog.
       format: meta ? (meta.table ? 'table' : 'time_series') : query.format,
-      // Drop a now-hidden channel value when the new metric isn't channel-faceted.
-      channel: meta && !meta.channel ? undefined : query.channel,
+      // Drop any facet value the new metric doesn't accept. Leaving a stale one behind would
+      // either be silently ignored (channel) or 400 the panel (campaign) instead of widening it.
+      ...Object.fromEntries(
+        FACETS.filter((f) => !metricAcceptsFacet(meta, f.flag)).map((f) => [f.key, undefined]),
+      ),
     });
     onRunQuery();
   };
 
-  const onTeamChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, team: event.target.value });
-  };
-
-  const onChannelChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, channel: event.target.value });
+  const onFacetChange = (key: (typeof FACETS)[number]['key']) => (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, [key]: event.target.value });
   };
 
   const onFormatChange = (format: RansomLeakFormat) => {
@@ -60,13 +106,14 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onRunQuery();
   };
 
-  const { metric, team, channel, format } = query;
+  const { metric, format } = query;
 
-  // Only phishing/smishing metrics are channel-faceted. Show the channel input
-  // for those, and for live metrics not in the static catalog (unknown faceting),
-  // but hide it for metrics the backend ignores it on.
+  // A facet is offered only when the selected metric accepts it — team always, campaign on the
+  // four training-campaign metrics, channel on the phishing/smishing ones.
   const described = metric ? describeMetric(metric) : undefined;
-  const showChannel = described ? Boolean(described.channel) : Boolean(metric);
+  // An unflagged facet (team) always shows, exactly as before this was table-driven; a flagged
+  // one needs a metric selected first, since faceting is unknown until then.
+  const visibleFacets = FACETS.filter((f) => (f.flag ? Boolean(metric) && metricAcceptsFacet(described, f.flag) : true));
 
   return (
     <Stack direction="column" gap={1}>
@@ -92,36 +139,18 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       </Stack>
       <Stack gap={1} wrap="wrap">
-        <InlineField
-          label="Team"
-          labelWidth={LABEL_WIDTH}
-          tooltip="Optional team filter. Supports variables, e.g. $team."
-        >
-          <Input
-            id="query-editor-team"
-            value={team ?? ''}
-            onChange={onTeamChange}
-            onBlur={onRunQuery}
-            placeholder="All teams"
-            width={28}
-          />
-        </InlineField>
-        {showChannel && (
-          <InlineField
-            label="Channel"
-            labelWidth={LABEL_WIDTH}
-            tooltip="Optional channel filter for phishing/smishing metrics, e.g. email or sms."
-          >
+        {visibleFacets.map((facet) => (
+          <InlineField key={facet.key} label={facet.label} labelWidth={LABEL_WIDTH} tooltip={facet.tooltip}>
             <Input
-              id="query-editor-channel"
-              value={channel ?? ''}
-              onChange={onChannelChange}
+              id={`query-editor-${facet.key}`}
+              value={query[facet.key] ?? ''}
+              onChange={onFacetChange(facet.key)}
               onBlur={onRunQuery}
-              placeholder="e.g. email"
+              placeholder={facet.placeholder}
               width={28}
             />
           </InlineField>
-        )}
+        ))}
       </Stack>
     </Stack>
   );

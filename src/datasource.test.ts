@@ -124,6 +124,42 @@ describe('DataSource.query', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('sends the campaign facet for a campaign-backed metric', async () => {
+    fetchMock.mockReturnValue(of({ status: 200, data: [] }));
+
+    const ds = makeDataSource();
+    await ds.query(
+      request([{ refId: 'A', metric: 'training_completion_rate', campaign: 'Q1 Security Training', format: 'table' }])
+    );
+
+    expect(fetchMock.mock.calls[0][0].data).toMatchObject({ campaign: 'Q1 Security Training' });
+  });
+
+  it('drops a stale campaign value when the metric does not accept the facet', async () => {
+    // Switching a panel from a campaign metric to human_risk_score can leave `campaign` on the
+    // target. The API 400s the facet on unsupported metrics, so sending it would break the panel
+    // rather than widen it.
+    fetchMock.mockReturnValue(of({ status: 200, data: [] }));
+
+    const ds = makeDataSource();
+    await ds.query(
+      request([{ refId: 'A', metric: 'human_risk_score', campaign: 'Q1 Security Training', format: 'time_series' }])
+    );
+
+    expect(fetchMock.mock.calls[0][0].data.campaign).toBeUndefined();
+  });
+
+  it('treats an empty campaign as no filter', async () => {
+    // A `$campaign` dashboard variable set to All interpolates to '' — that must widen to all
+    // campaigns, not match a campaign literally named ''.
+    fetchMock.mockReturnValue(of({ status: 200, data: [] }));
+
+    const ds = makeDataSource();
+    await ds.query(request([{ refId: 'A', metric: 'overdue_users', campaign: '', format: 'table' }]));
+
+    expect(fetchMock.mock.calls[0][0].data.campaign).toBeUndefined();
+  });
+
   it('degrades gracefully when a 200 response omits datapoints/columns/rows', async () => {
     // A series with no datapoints and a table with no rows must not throw.
     fetchMock

@@ -15,6 +15,12 @@ export interface MetricDescriptor {
   table?: boolean;
   /** Faceted by communication channel (e.g. `email`, `sms`). */
   channel?: boolean;
+  /**
+   * Accepts the training-campaign facet. True only for the metrics built on the
+   * training `campaign` table — the phishing metrics are scoped by phishing
+   * campaign, a different entity, so they deliberately do NOT set this.
+   */
+  campaign?: boolean;
 }
 
 export const METRICS: MetricDescriptor[] = [
@@ -23,8 +29,14 @@ export const METRICS: MetricDescriptor[] = [
     value: 'training_completion_rate',
     label: 'Training completion rate',
     description: 'Share of assigned security-awareness training completed.',
+    campaign: true,
   },
-  { value: 'assignments_overdue', label: 'Assignments overdue', description: 'Count of overdue training assignments.' },
+  {
+    value: 'assignments_overdue',
+    label: 'Assignments overdue',
+    description: 'Count of overdue training assignments.',
+    campaign: true,
+  },
   {
     value: 'phishing_click_rate',
     label: 'Phishing click rate',
@@ -37,11 +49,18 @@ export const METRICS: MetricDescriptor[] = [
     description: 'Simulated-phishing report rate for a channel.',
     channel: true,
   },
-  { value: 'overdue_users', label: 'Overdue users (table)', description: 'Employees with overdue training.', table: true },
+  {
+    value: 'overdue_users',
+    label: 'Overdue users (table)',
+    description: 'Employees with overdue training.',
+    table: true,
+    campaign: true,
+  },
   {
     value: 'assignments_by_category',
     label: 'Assignments by category',
     description: 'Assignment volume per training category.',
+    campaign: true,
   },
   {
     value: 'auto_assigned_via_grafana',

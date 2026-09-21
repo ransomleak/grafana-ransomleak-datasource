@@ -23,7 +23,7 @@ demand. There is no emitter, no backend component, and no Go code in v1.
 Grafana (customer)                          RansomLeak API
   RansomLeak data source (this repo)
     jsonData.host + secureJsonData.apiKey
-    query editor: metric + team + channel + format
+    query editor: metric + team + campaign + channel + format
         │
         │  Grafana data proxy (server-side; injects Authorization
         │  from secureJsonData via the `rl` route in plugin.json)
@@ -59,7 +59,7 @@ Metrics: `human_risk_score`, `training_completion_rate`, `assignments_overdue`,
 src/
   datasource.ts            query()/testDatasource()/metricFindQuery() + SimpleJSON→DataFrame mapping
   components/ConfigEditor   host (jsonData) + partner key (secureJsonData)
-  components/QueryEditor     metric dropdown + team + channel + format
+  components/QueryEditor     metric dropdown + team + campaign + channel + format
   metrics.ts               metric catalog / dropdown fallback
   types.ts                 query + options + SimpleJSON response types
   plugin.json              datasource manifest incl. the `rl` data-proxy route

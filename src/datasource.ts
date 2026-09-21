@@ -63,12 +63,13 @@ export class DataSource extends DataSourceApi<RansomLeakQuery, RansomLeakDataSou
     return !query.hide && Boolean(query.metric);
   }
 
-  /** Interpolate dashboard variables in the facet fields (e.g. `$team`). */
+  /** Interpolate dashboard variables in the facet fields (e.g. `$team`, `$campaign`). */
   applyTemplateVariables(query: RansomLeakQuery, scopedVars: ScopedVars): RansomLeakQuery {
     const tsrv = getTemplateSrv();
     return {
       ...query,
       team: query.team ? tsrv.replace(query.team, scopedVars) : query.team,
+      campaign: query.campaign ? tsrv.replace(query.campaign, scopedVars) : query.campaign,
       channel: query.channel ? tsrv.replace(query.channel, scopedVars) : query.channel,
       metric: query.metric ? tsrv.replace(query.metric, scopedVars) : query.metric,
     };
@@ -87,9 +88,16 @@ export class DataSource extends DataSourceApi<RansomLeakQuery, RansomLeakDataSou
         // applyTemplateVariables runs in the standard query path, but interpolate
         // here too so Explore / ad-hoc callers behave identically.
         const target = this.applyTemplateVariables(raw, scopedVars);
+        // Same rule, same phrasing, as the query editor's `showCampaign`: a metric we can
+        // describe takes the facet only if it declares it; a live-only metric we can't describe
+        // passes through. Drops a value left over from a previously selected metric, which the
+        // API would otherwise reject with a 400.
+        const described = describeMetric(target.metric ?? '');
+        const campaignAllowed = described ? Boolean(described.campaign) : true;
         const body = {
           metric: target.metric,
           team: target.team || undefined,
+          campaign: campaignAllowed ? target.campaign || undefined : undefined,
           channel: target.channel || undefined,
           format: target.format ?? 'time_series',
           range: { from: range.from.toISOString(), to: range.to.toISOString() },

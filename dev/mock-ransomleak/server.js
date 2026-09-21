@@ -105,15 +105,26 @@ function teamsFor(filter) {
 // --- per-metric data ----------------------------------------------------------
 // Single-series metrics: each maps the request body to one { target, seed, opts }.
 // (human_risk_score and assignments_by_category fan out and are handled inline.)
+
+/**
+ * Suffix appended to a series label + seed when the campaign facet is set, so a developer can
+ * see the facet actually reaching the API (the numbers shift with it) instead of wondering
+ * whether the field is wired up. The real backend filters; this only has to be visibly distinct.
+ */
+function campaignSuffix(body) {
+  const campaign = body.campaign && body.campaign.trim();
+  return campaign ? ' · ' + campaign : '';
+}
 const SINGLE_SERIES = {
-  training_completion_rate: ({ team }) => {
+  training_completion_rate: (body) => {
     // Aggregate metric: a single org-wide series, or one series for a filtered team.
-    const label = team && team.trim() ? team.trim() : 'All teams';
+    const { team } = body;
+    const label = (team && team.trim() ? team.trim() : 'All teams') + campaignSuffix(body);
     return { target: label, seed: 'completion|' + label, opts: { min: 62, max: 99 } };
   },
-  assignments_overdue: ({ team }) => ({
-    target: team ? team.trim() : 'All teams',
-    seed: 'overdue|' + (team || 'all'),
+  assignments_overdue: (body) => ({
+    target: (body.team ? body.team.trim() : 'All teams') + campaignSuffix(body),
+    seed: 'overdue|' + (body.team || 'all') + campaignSuffix(body),
     opts: { min: 4, max: 90, integer: true },
   }),
   phishing_click_rate: ({ channel }) => ({
@@ -132,7 +143,11 @@ const SINGLE_SERIES = {
     opts: { min: 0, max: 14, integer: true },
   }),
   // tabular metric requested as time series — collapse to a running count
-  overdue_users: () => ({ target: 'Overdue users', seed: 'overdue_users', opts: { min: 3, max: 40, integer: true } }),
+  overdue_users: (body) => ({
+    target: 'Overdue users' + campaignSuffix(body),
+    seed: 'overdue_users' + campaignSuffix(body),
+    opts: { min: 3, max: 40, integer: true },
+  }),
 };
 
 function buildSeries(metric, body) {
@@ -145,7 +160,7 @@ function buildSeries(metric, body) {
   if (metric === 'assignments_by_category') {
     return CATEGORIES.map((c) => ({
       target: c,
-      datapoints: walk(seed('cat|' + c), points, { min: 5, max: 70, integer: true }),
+      datapoints: walk(seed('cat|' + c + campaignSuffix(body)), points, { min: 5, max: 70, integer: true }),
     }));
   }
   const single = SINGLE_SERIES[metric];
@@ -158,7 +173,7 @@ function buildSeries(metric, body) {
 
 function buildTable(metric, body) {
   const { team } = body;
-  const rng = mulberry32(hashSeed('table|' + metric + '|' + (team || 'all')));
+  const rng = mulberry32(hashSeed('table|' + metric + '|' + (team || 'all') + campaignSuffix(body)));
 
   if (metric === 'assignments_by_category') {
     return [

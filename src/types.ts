@@ -7,14 +7,21 @@ export type RansomLeakFormat = 'time_series' | 'table';
 /**
  * A single query target in the panel editor.
  *
- * `metric` selects what human-risk signal to pull (see {@link METRICS}); `team`
- * and `channel` are optional facet filters (both support dashboard variables,
- * e.g. `$team`). `format` decides whether the API returns a time series or a
- * table.
+ * `metric` selects what human-risk signal to pull (see {@link METRICS}); `team`,
+ * `campaign` and `channel` are optional facet filters (all support dashboard
+ * variables, e.g. `$team`). `format` decides whether the API returns a time
+ * series or a table.
  */
 export interface RansomLeakQuery extends DataQuery {
   metric?: string;
   team?: string;
+  /**
+   * Training-campaign filter: a campaign name, or a campaign id when names collide
+   * (campaign names are not unique). Only the four campaign-backed metrics accept
+   * it — see {@link MetricDescriptor.campaign}; the API 400s on the others rather
+   * than silently returning tenant-wide numbers.
+   */
+  campaign?: string;
   channel?: string;
   format: RansomLeakFormat;
 }
