@@ -1,13 +1,5 @@
 # Changelog
 
-## 1.1.1
-
-- First **signed** build. No functional change from 1.1.0 — the signing step in
-  `release.yml` is gated on `if: inputs.policy_token != ''`, so every release up
-  to and including 1.1.0 skipped it silently and shipped without a
-  `MANIFEST.txt`. With `GRAFANA_ACCESS_POLICY_TOKEN` now set as a repo secret,
-  the step actually runs.
-
 ## 1.1.0
 
 - Query editor gains an optional **Campaign** filter (name or campaign id) on the

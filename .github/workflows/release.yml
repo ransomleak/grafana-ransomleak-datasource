@@ -20,10 +20,20 @@ jobs:
           persist-credentials: false
 
       - uses: grafana/plugin-actions/build-plugin@build-plugin/v1.2.0
-        # Plugin signing is enabled. Add a repository secret named
-        # GRAFANA_ACCESS_POLICY_TOKEN (an access policy token created under the
-        # Grafana Cloud account whose slug matches the plugin id org segment,
-        # i.e. "ransomleak"), with the plugins:write scope. See:
-        # https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin#generate-an-access-policy-token
+        # Signing is gated on the repo VARIABLE `PLUGIN_SIGNING_ENABLED`, not on the
+        # secret alone. `GRAFANA_ACCESS_POLICY_TOKEN` (plugins:write, org slug
+        # "ransomleak") is set, but Grafana will not issue a COMMUNITY signature for a
+        # plugin it has not yet approved: sign-plugin gets
+        #   409 InvalidArgument — "Field is required: rootUrls"
+        # i.e. it offers only a PRIVATE signature, which is scoped to named instances
+        # and is the wrong artifact for the catalog. Passing the token today therefore
+        # turns every release red at the signing step (see the v1.1.1 attempt), where
+        # before it simply skipped and shipped unsigned — which is what the plugin
+        # validator says to do while a first submission is in review.
+        #
+        # After Grafana approves the plugin, set the repo variable
+        # PLUGIN_SIGNING_ENABLED=true and releases will sign themselves. Until then an
+        # empty token makes package-plugin skip signing via its own
+        # `if: inputs.policy_token != ''` guard.
         with:
-          policy_token: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
+          policy_token: ${{ vars.PLUGIN_SIGNING_ENABLED == 'true' && secrets.GRAFANA_ACCESS_POLICY_TOKEN || '' }}

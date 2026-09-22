@@ -15,12 +15,40 @@ What is true today:
 | Org slug | `ransomleak` — matches the plugin id prefix, prerequisite satisfied |
 | Submission | **exists**, at version **1.0.0**, status *Received* (review pending) |
 | Latest release | **v1.1.0** (campaign facet) — newer than what is under review |
-| Signing | **not done**: no `MANIFEST.txt`; `GRAFANA_ACCESS_POLICY_TOKEN` is unset as a repo secret, so `release.yml` skips its signing step and publishes an unsigned zip |
+| Signing | **not possible yet** — see below. `GRAFANA_ACCESS_POLICY_TOKEN` *is* now set, but signing is deliberately gated off |
 | Published in catalog | no — still awaiting review |
 
 So the next action is **Update Submission** on the existing row (§4), not *Submit
 New Plugin*. Whether to bump it to v1.1.0 mid-review, or let 1.0.0 clear first and
 update after, is a judgement call — updating may affect queue position.
+
+### Signing is blocked until Grafana approves the plugin (tested 2026-09-22)
+
+Setting the token is not enough. With `GRAFANA_ACCESS_POLICY_TOKEN` in place, a
+`v1.1.1` tag reached the signing step and Grafana rejected it:
+
+```
+sign-plugin@3.3.1  Error signing manifest.
+Server responded with status code 409
+ • code: InvalidArgument
+ • message: Field is required: rootUrls
+```
+
+The token authenticated fine — a 409, not a 401/403. Grafana will not issue a
+**community** signature for a plugin it has not approved; it offers only a
+**private** signature, which is what `rootUrls` is for, and which is scoped to
+named instances and therefore the wrong artifact for the catalog. This matches
+the plugin validator's own wording: *"This is a new (unpublished) plugin. This is
+expected during the initial review process… a member of our team will inform you
+when your plugin can be signed."*
+
+So an unsigned release is the correct state while the submission is in review.
+
+Because a present token makes the signing step hard-fail, `release.yml` now gates
+it on the repo **variable** `PLUGIN_SIGNING_ENABLED` rather than on the secret
+alone. The secret stays put; releases keep shipping unsigned and green. **After
+Grafana approves the plugin, set `PLUGIN_SIGNING_ENABLED=true`** and tags will
+sign themselves.
 
 Signing and submission are credential-gated, outward-facing actions, so they are
 left for a maintainer to run. This file is the checklist.
