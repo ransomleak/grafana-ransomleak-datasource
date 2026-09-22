@@ -1,10 +1,29 @@
 # Publishing to the Grafana plugin catalog
 
-This plugin is **catalog-ready** but not yet signed or submitted. Signing needs a
-real Grafana Cloud access-policy token and submission publishes the plugin under
-your org on grafana.com — both are credential-gated, outward-facing actions, so
-they are intentionally left for a maintainer to run. This file is the exact
-checklist.
+## Current state (verified 2026-09-22)
+
+**The plugin HAS been submitted.** `grafana.com/orgs/ransomleak/plugins` lists
+`ransomleak-ransomleak-datasource (1.0.0)` under *Submitted Plugins* with status
+**Received**, carrying reviewer test instructions. Do not read the steps below as
+"nothing has happened yet" — an earlier version of this file said exactly that
+long after the submission existed, and it was believed.
+
+What is true today:
+
+| | State |
+|---|---|
+| Org slug | `ransomleak` — matches the plugin id prefix, prerequisite satisfied |
+| Submission | **exists**, at version **1.0.0**, status *Received* (review pending) |
+| Latest release | **v1.1.0** (campaign facet) — newer than what is under review |
+| Signing | **not done**: no `MANIFEST.txt`; `GRAFANA_ACCESS_POLICY_TOKEN` is unset as a repo secret, so `release.yml` skips its signing step and publishes an unsigned zip |
+| Published in catalog | no — still awaiting review |
+
+So the next action is **Update Submission** on the existing row (§4), not *Submit
+New Plugin*. Whether to bump it to v1.1.0 mid-review, or let 1.0.0 clear first and
+update after, is a judgement call — updating may affect queue position.
+
+Signing and submission are credential-gated, outward-facing actions, so they are
+left for a maintainer to run. This file is the checklist.
 
 ## 0. One-time prerequisites
 
@@ -58,7 +77,11 @@ Then repackage `dist/` (now including `MANIFEST.txt`) into the zip as in step 2.
 
 ## 4. Submit
 
-1. Go to **https://grafana.com/auth/sign-in → My Account → Plugins → Submit Plugin**.
+1. Go to **https://grafana.com/orgs/ransomleak/plugins** (sign in first if needed).
+   A submission already exists — use **Update Submission** on the
+   `ransomleak-ransomleak-datasource` row rather than *Submit New Plugin*, which
+   would create a duplicate. *Submit New Plugin* applies only to a genuinely new
+   plugin id.
 2. Provide the packaged zip URL (a public GitHub Release asset is ideal — see the
    scaffolded `.github/workflows/release.yml`, which builds, signs, and attaches
    the zip when you push a `vX.Y.Z` tag with the `GRAFANA_ACCESS_POLICY_TOKEN`
@@ -89,8 +112,13 @@ The release workflow builds, signs, and produces the catalog-ready artifact.
 
 ## What is NOT done here
 
-- The plugin is **unsigned** (`dist/` has no `MANIFEST.txt` yet).
-- Nothing has been pushed to grafana.com.
+- The plugin is **unsigned** (`dist/` has no `MANIFEST.txt`, and the repo secret
+  `GRAFANA_ACCESS_POLICY_TOKEN` is unset, so `release.yml`'s signing step is
+  skipped — `package-plugin` guards it with `if: inputs.policy_token != ''`, so
+  the release still succeeds and simply ships unsigned). Unsigned is expected for
+  a first review; Grafana signs at community level on approval.
+- The submission is **still at 1.0.0** while v1.1.0 is the latest release.
+- The plugin is **not yet published** in the catalog — review is pending.
 
-Both are deliberate: they require your Grafana Cloud credentials and publish
-externally.
+Keep this section honest. It previously claimed nothing had been pushed to
+grafana.com, which stayed wrong for months and misled a later reader.
