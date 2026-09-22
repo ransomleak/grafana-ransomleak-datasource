@@ -46,3 +46,16 @@ ci/
 .idea
 
 .eslintcache
+
+# macOS
+.DS_Store
+
+# Local packaging output from SUBMISSION.md step 2 (`cp -r dist "$PLUGIN_ID"` +
+# `zip -qr "$PLUGIN_ID.zip"`), used to run @grafana/plugin-validator locally.
+# The artifact that actually ships is the GitHub release asset that release.yml
+# builds and attaches, so these local copies are throwaway and must never be
+# committed — a stale one in the tree is worse than none, since it looks
+# authoritative while lagging whatever the last tag published.
+/*.zip
+/*.zip.sha1
+/ransomleak-ransomleak-datasource/
